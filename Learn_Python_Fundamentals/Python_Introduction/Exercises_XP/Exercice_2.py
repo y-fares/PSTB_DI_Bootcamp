@@ -1,8 +1,8 @@
 output = []
 
 def human_years():
-    human_age = int(input("Enter the age of the dog in human years: "))
-    if human_years < 0:
+    human_age = int(input("output = "))
+    if human_age < 0:
         print("Age cannot be negative.")
     else:
         cat_age = cat_years(human_age)
@@ -19,15 +19,19 @@ def cat_years(human_age):
     elif human_age == 2:
         cat_age = 24
     else:
-        cat_age = 24 + (cat_years - 2) * 4
+        cat_age = 24 + (human_age - 2) * 4
     return cat_age
 
 def dog_years(human_age):
-        dog_age = 0
+    dog_age = 0
     if human_age == 1:
         dog_age = 15
     elif human_age == 2:
         dog_age = 24
     else:
-        dog_age = 24 + (cat_years - 2) * 5
+        dog_age = 24 + (human_age - 2) * 5
     return dog_age
+
+
+output = human_years()
+print(output)
