@@ -1,7 +1,7 @@
 output = []
 
 def human_years():
-    human_age = int(input("output = "))
+    human_age = int(input("human_years = "))
     if human_age < 0:
         print("Age cannot be negative.")
     else:
