@@ -8,6 +8,8 @@ print("I AM A COMPUTER!")
 #Write an if statement that checks if 1 is less than 2 and if 4 is greater than 2. If it is, show the message "Math is fun."
 if (1 < 2) and (4 > 2):
     print("Math is fun.")
+else :
+    print("Math is not fun.")
 #Assign a variable called nope to an absence of value.
 nope = None
 #Use the language’s “and” boolean operator to combine the language’s “true” value with its “false” value.
