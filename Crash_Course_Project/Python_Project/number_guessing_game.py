@@ -1,8 +1,12 @@
 import random
 
+# Fonction pour le jeu de devinette
 def number_guessing_game():
+    # On génère un nombre aléatoire entre 1 et 100
     random_number = random.randint(1, 100)
+    # On fixe le nombre maximum de tentatives à 7
     max_attempts = 7
+    # Instanciation de la variable du nombre de tentatives
     attempt = 0
     for attempt in range(max_attempts):
         guess = int(input("Enter your guess (1-100): "))
