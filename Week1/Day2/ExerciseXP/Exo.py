@@ -39,17 +39,17 @@ def calculate_ticket_price(f):
 total_cost = calculate_ticket_price(family)
 print(f"The total cost for the family is: ${total_cost}")
 
-# niou_family = {}
-# while True:
-#     name = input("Enter family member's name (or type 'quit' to finish): ")
-#     if name.lower() == 'quit':
-#         break
-#     age = int(input(f"Enter {name}'s age: "))
-#     niou_family[name] = age
+niou_family = {}
+while True:
+    name = input("Enter family member's name (or type 'quit' to finish): ")
+    if name.lower() == 'quit':
+        break
+    age = int(input(f"Enter {name}'s age: "))
+    niou_family[name] = age
 
-# print("Calculating ticket prices for the new family:")
-# niou_total_cost = calculate_ticket_price(niou_family)
-# print(f"The new total cost for the family is: ${niou_total_cost}")
+print("Calculating ticket prices for the new family:")
+niou_total_cost = calculate_ticket_price(niou_family)
+print(f"The new total cost for the family is: ${niou_total_cost}")
 
 # Exercise 3: Zara
 ## Instructions
