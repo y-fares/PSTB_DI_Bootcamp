@@ -16,10 +16,9 @@ print(multiples)
 # and display a new string with any duplicate consecutive letters removed.
 
 str_user = input("Enter a string: ")
-new_str = ""
+new_str = str_user[0]
 for i in str_user:
-    if i not in new_str:
+    if i != new_str[-1]:
         new_str += i
-    else:
-        continue
+    
 print(new_str)
