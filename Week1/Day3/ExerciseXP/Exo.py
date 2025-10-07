@@ -179,7 +179,10 @@ class Zoo:
                 grouped_animals[first_letter] = []
             grouped_animals[first_letter].append(animal)
         self.grouped_animals = grouped_animals
-        print("\nAnimals sorted and grouped by first letter.")
+        print("\n\n{")
+        for i,v in grouped_animals.items():
+            print(f"  {i}: {v}")
+        print("}\n")
 
 # 7. Add a method get_groups():
 # This method prints the grouped animals as created by sort_animals().
@@ -210,7 +213,7 @@ brooklyn_safari.add_animal("Giraffe")
 brooklyn_safari.add_animal("Bear")
 brooklyn_safari.add_animal("Baboon")
 brooklyn_safari.get_animals()
-brooklyn_safari.sell_animal("Bear")
-brooklyn_safari.get_animals()
+# brooklyn_safari.sell_animal("Bear")
+# brooklyn_safari.get_animals()
 brooklyn_safari.sort_animals()
 brooklyn_safari.get_groups()
