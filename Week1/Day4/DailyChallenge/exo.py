@@ -137,7 +137,7 @@ class Pagination:
 if __name__ == "__main__":
     alphabetList = list("abcdefghijklmnopqrstuvwxyz")
     p = Pagination(alphabetList, 4)
-
+    print(str(p))
     print(p.get_visible_items())
     # ['a', 'b', 'c', 'd']
 
