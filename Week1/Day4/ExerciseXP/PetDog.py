@@ -1,3 +1,5 @@
+
+import random
 from Pets import Dog
 
 
@@ -41,7 +43,6 @@ class PetDog(Dog):
         print(f"{self.name}, {dog_names} all play together")
 
     def do_a_trick(self):
-        import random
         if self.trained:
             tricks = ["does a barrel roll", "stands on his back legs", "shakes your hand", "plays dead"]
             print(f"{self.name} {random.choice(tricks)}")
@@ -49,7 +50,11 @@ class PetDog(Dog):
 if __name__ == "__main__":
 
     # Test PetDog methods
-    my_dog = PetDog("Fido", 2, 10)
-    my_dog.train()
-    my_dog.play("Buddy", "Max")
-    my_dog.do_a_trick()
+    my_dog1 = PetDog("Fido", 2, 10)
+    my_dog2 = PetDog("Milou", 10, 45)
+    my_dog1.train()
+    my_dog2.train()
+    my_dog1.play("Buddy", "Max")
+    my_dog2.play("Buddy", "Max")
+    my_dog1.do_a_trick()
+    my_dog2.do_a_trick()
