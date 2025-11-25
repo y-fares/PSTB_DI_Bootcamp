@@ -79,6 +79,7 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
                 args=web_args.split(),
             )
         )
+        external_count += 1
 
     local_args = os.getenv("MCP_LOCAL_ARGS")
     if local_args:
@@ -90,10 +91,30 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
             )
         )
 
+    if not local_args:
+        raise RuntimeError(
+            "MCP_LOCAL_ARGS must be set for Part 2 and must point to your my_mcp_server.py.\n"
+            "Example: MCP_LOCAL_CMD=python, MCP_LOCAL_ARGS=my_mcp_server.py"
+        )
+
     if len(servers) < 2:
         raise RuntimeError(
             "You must configure at least 2 MCP servers via env vars "
             "(e.g. MCP_FILES_ARGS and MCP_WEB_ARGS)."
+        )
+
+    servers.append(
+        MCPServerConfig(
+            name="local_insights",
+            command=os.getenv("MCP_LOCAL_CMD", "python"),
+            args=local_args.split(),
+        )
+    )
+
+    if external_count < 2:
+        raise RuntimeError(
+            "You must configure at least 2 external MCP servers (e.g. files + web) "
+            "in addition to your local_insights server."
         )
 
     return servers
