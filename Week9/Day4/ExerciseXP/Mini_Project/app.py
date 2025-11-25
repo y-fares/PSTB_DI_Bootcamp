@@ -1,5 +1,5 @@
 # app.py
-# ### Streamlit UI for the MCP agentic application
+# ### Streamlit UI for the MCP + custom server agentic application
 
 from __future__ import annotations
 
@@ -10,37 +10,34 @@ from orchestrator import run_agent_sync
 
 
 def main() -> None:
-    # Simple init flag to éviter les bugs de session_state
     if "init" not in st.session_state:
         st.session_state["init"] = True
 
-    st.set_page_config(page_title="MCP Agentic App", layout="wide")
+    st.set_page_config(page_title="MCP Agentic App (Part 2)", layout="wide")
 
-    st.title("🔧 MCP Agentic Application")
+    st.title("🔧 MCP Agentic Application – Part 2")
+    st.markdown(
+        "This app composes **two external MCP servers** (filesystem + web) "
+        "with **your custom `local_insights` server** using an LLM for planning."
+    )
 
-    # Petit indicateur pour être sûr que l'app se charge
-    st.markdown("✅ **App loaded.** If you see this, Streamlit is running correctly.")
-
-    # Affichage de la config LLM
-    try:
-        llm_cfg = load_llm_config()
-        st.markdown(
-            f"""
-            ### Configuration
-            - **LLM backend:** `{llm_cfg.backend}`
-            - **Model:** `{llm_cfg.model}`
-            """
-        )
-    except Exception as e:  # si la config LLM foire, on le voit dans l'UI
-        st.error("Error while loading LLM configuration.")
-        st.exception(e)
-        return
+    llm_cfg = load_llm_config()
+    st.markdown(
+        f"""
+        ### Runtime configuration
+        - **LLM backend:** `{llm_cfg.backend}`
+        - **Model:** `{llm_cfg.model}`
+        """
+    )
 
     st.markdown("### User goal")
     user_goal = st.text_area(
         "Describe what you want the agent to do:",
         height=150,
-        placeholder="Example: Search the web for recent news on MCP and summarize key trends...",
+        placeholder=(
+            "Example: Search the web for recent information about MCP, "
+            "clean the relevant text, and generate structured insights."
+        ),
     )
 
     if st.button("Run agent", type="primary"):
@@ -50,7 +47,7 @@ def main() -> None:
             with st.spinner("Running agent with MCP tools..."):
                 try:
                     result = run_agent_sync(user_goal)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     st.error("Agent crashed while running.")
                     st.exception(e)
                     return
@@ -77,5 +74,4 @@ def main() -> None:
                             st.code(log.error)
 
 
-# Avec Streamlit, on appelle main() directement (le script est exécuté comme __main__)
 main()
