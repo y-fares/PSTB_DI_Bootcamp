@@ -1,0 +1,11 @@
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day3/ExerciseXP/exercices/requirements.txt
+suggestions for improvement:
+- Skipping file (too many comments or blank lines).
+Correctness: N/A%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day3/ExerciseXP/exercices/starter.py
+suggestions for improvement:
+- The comments in the scientist respond_to_action function are in French. This may be confusing for English speakers.
+- Consider adding more comments in the take_action function of the PenguinAgent class to improve readability.
+Correctness: 100%
+-----
