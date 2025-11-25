@@ -1,0 +1,10 @@
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day1/ExerciseXP/mcp-101/client.py
+suggestions for improvement:
+- No specific feedback.
+Correctness: 100%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day1/ExerciseXP/mcp-101/server.py
+suggestions for improvement:
+- No specific feedback.
+Correctness: 100%
+-----
