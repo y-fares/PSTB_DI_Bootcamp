@@ -1,0 +1,25 @@
+seed: 42
+models:
+  generator: "t5-small"
+  summarizer: "t5-small"
+  embedder: "sentence-transformers/all-MiniLM-L6-v2"
+decoding:
+  max_new_tokens: 128
+  temperature: 0.9
+  top_k: 40
+  top_p: 0.9
+quality_score:
+  weights: {sim: 0.5, length: 0.2, readability: 0.3}
+  length: {min_tokens: 64, max_tokens: 160}
+  thresholds: {pass: 0.75, warn: 0.60}
+ethics:
+  toxicity_threshold: 0.50
+  pii_patterns:
+    - "\b[0-9]{10}\b"
+    - "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+    - "\bFR[0-9A-Z]{2}[0-9]{10}\b"
+orchestration:
+  timeouts_sec: {generation: 2.0, qc: 1.0, ethics: 0.5}
+  retries: 2
+storage:
+  sqlite_path: "app/data/runs.db"
