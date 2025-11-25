@@ -1,42 +1,68 @@
 # test_mcp.py
-# ### Test MCP servers: discovery + simple composition example (no LLM)
+# ### Test MCP servers: discovery + multi-server composition (NO LLM)
 
 from __future__ import annotations
 
 import asyncio
-
 from config import load_mcp_server_configs
 from mcp_multi_client import MCPMultiClient
 
 
 async def main() -> None:
     configs = load_mcp_server_configs()
-    print("Configured servers:")
+
+    print("=== CONFIGURED SERVERS ===")
     for cfg in configs:
         print(f"- {cfg.name}: {cfg.command} {' '.join(cfg.args)}")
 
+    print("\n=== CONNECTING TO MCP SERVERS ===")
     async with MCPMultiClient(configs, debug=True) as client:
-        print("\nDiscovered tools:")
+        print("\n=== DISCOVERED MCP TOOLS ===")
         for name, td in client.tools.items():
             print(f"- {name} (server={td.server_name})")
 
-        # Minimal end-to-end composition demo (no LLM yet):
-        # 1) Use local_insights__clean_text
-        # 2) Use local_insights__generate_insights
-        if "local_insights__clean_text" in client.tools and "local_insights__generate_insights" in client.tools:
-            print("\nRunning local_insights tools pipeline:")
-            raw = "This  is   a   demo  text. There might be a potential risk here."
-            cleaned = await client.call_tool(
-                "local_insights__clean_text",
-                {"text": raw, "lowercase": True},
-            )
-            print("Cleaned text:", cleaned)
+        required = {
+            "files__listDirectory",
+            "files__readFile",
+            "local_insights__clean_text",
+            "local_insights__generate_insights",
+        }
 
-            insights = await client.call_tool(
-                "local_insights__generate_insights",
-                {"text": cleaned},
-            )
-            print("Insights JSON:\n", insights)
+        if not required.issubset(client.tools.keys()):
+            print("\nERROR: Missing some required tools for the demo.")
+            return
+
+        print("\n=== MULTI-SERVER COMPOSITION DEMO ===")
+
+        print("\n1) Listing folder with filesystem MCP:")
+        listing = await client.call_tool(
+            "files__listDirectory",
+            {"path": "/home/yacine/mcp_root"},
+        )
+        print(listing)
+
+        print("\n2) Reading test.txt with filesystem MCP:")
+        file_content = await client.call_tool(
+            "files__readFile",
+            {"path": "/home/yacine/mcp_root/test.txt"},
+        )
+        print(file_content)
+
+        print("\n3) Cleaning text with custom MCP server:")
+        cleaned = await client.call_tool(
+            "local_insights__clean_text",
+            {"text": file_content, "lowercase": True},
+        )
+        print(cleaned)
+
+        print("\n4) Generating insights with custom MCP server:")
+        insights = await client.call_tool(
+            "local_insights__generate_insights",
+            {"text": cleaned},
+        )
+        print(insights)
+
+        print("\n=== TEST COMPLETED ===")
 
 
 if __name__ == "__main__":

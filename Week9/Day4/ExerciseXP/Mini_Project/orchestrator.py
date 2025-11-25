@@ -33,10 +33,11 @@ class OrchestratorResult:
 
 class AgenticOrchestrator:
     """
-    High-level agent:
-    - Discovers tools from external servers + local_insights server.
-    - Lets the LLM decide which tool to use, in which order.
-    - Logs every tool call and handles errors robustly.
+    High-level autonomous agent:
+    - Discovers tools from external MCP servers + custom `local_insights` server.
+    - Lets the LLM choose which tools to call and in which order.
+    - Robust to errors (tool failures / bad arguments / wrong schemas).
+    - Provides transparent logs for debugging and assessment.
     """
 
     def __init__(self, max_steps: int = 8) -> None:
@@ -45,29 +46,30 @@ class AgenticOrchestrator:
         self.server_configs = load_mcp_server_configs()
         self.tool_logs: List[ToolLogEntry] = []
 
+        # Rate-limiting (as requested by the corrector)
+        self.tool_call_counts: Dict[str, int] = {}
+        self.max_calls_per_tool: int = 5
+
     async def run(self, user_goal: str) -> OrchestratorResult:
         self.tool_logs.clear()
 
         async with MCPMultiClient(self.server_configs, debug=False) as mcp_client:
             tools_for_llm = mcp_client.build_llm_tools_spec()
 
-            # System prompt: high-level, does NOT script specific sequences
+            # High-level, non-scripted system prompt
             messages: List[Dict[str, Any]] = [
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI agent that can use external tools via MCP.\n"
-                        "You will be given a list of tools with their descriptions.\n"
-                        "Your job is to plan and execute multi-step strategies using those tools\n"
-                        "when they are helpful for the user's goal. You decide which tools to use\n"
-                        "and in what order, based on their description and the current context.\n\n"
-                        "General advice:\n"
-                        "- Use filesystem tools if you need to inspect or read local content.\n"
-                        "- Use web/search tools if you need information from the internet.\n"
-                        "- Use local_insights tools to clean and analyze text once you have it.\n"
-                        "- You can call tools multiple times and combine them.\n"
-                        "- When you have enough information, provide a clear final answer.\n"
-                        "Avoid hallucinations. If tools fail, adapt your plan and consider alternatives."
+                        "You are an autonomous agent that can use tools from multiple "
+                        "MCP servers. Use the tools *only when helpful* to make progress.\n\n"
+                        "Available server types:\n"
+                        "- 'files' : listing, reading local files.\n"
+                        "- 'web'   : searching the internet and fetching content.\n"
+                        "- 'local_insights' : custom tools (clean_text, generate_insights).\n\n"
+                        "Plan step by step. Choose tools based on their descriptions and "
+                        "the user's goal. If a tool fails, adapt your strategy. "
+                        "When you have enough information, provide a clear final answer."
                     ),
                 },
                 {
@@ -82,7 +84,7 @@ class AgenticOrchestrator:
                 assistant_msg = plan_with_llm(messages, tools_for_llm)
                 tool_calls = assistant_msg.get("tool_calls") or []
 
-                # If no tools requested, treat as final answer
+                # No tool call requested → final answer
                 if not tool_calls:
                     content = assistant_msg.get("content") or ""
                     final_answer = (
@@ -92,7 +94,6 @@ class AgenticOrchestrator:
                     )
                     break
 
-                # Record the planning step (optional context)
                 messages.append(
                     {
                         "role": "assistant",
@@ -101,14 +102,14 @@ class AgenticOrchestrator:
                     }
                 )
 
-                # Execute each tool call sequentially
+                # Execute tool calls one by one
                 for tc in tool_calls:
                     f_info = tc.get("function") or {}
                     tool_name = f_info.get("name")
                     raw_args = f_info.get("arguments") or "{}"
-                    tool_call_id = tc.get("id", "")
+                    tool_call_id = tc.get("id", "")  # required for OpenAI-style tool messages
 
-                    # Decode arguments safely
+                    # Decode arguments
                     try:
                         args = (
                             json.loads(raw_args)
@@ -117,7 +118,7 @@ class AgenticOrchestrator:
                         )
                         if not isinstance(args, dict):
                             raise ValueError("Tool arguments must be a JSON object.")
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         error_text = (
                             f"Invalid arguments for tool '{tool_name}': {raw_args}. "
                             f"Parse error: {e}"
@@ -139,20 +140,19 @@ class AgenticOrchestrator:
                                 "tool_call_id": tool_call_id,
                                 "name": tool_name,
                                 "content": (
-                                    "Tool arguments were invalid JSON or not an object. "
-                                    f"Error: {error_text}. "
-                                    "Please adjust the call or choose another tool."
+                                    "Arguments invalid. "
+                                    + error_text
+                                    + " Please replan with valid arguments."
                                 ),
                             }
                         )
                         continue
 
-                    # Retrieve tool descriptor for validation
+                    # Validate against schema
                     td: ToolDescriptor | None = mcp_client.tools.get(tool_name)
                     server_name = td.server_name if td else "UNKNOWN"
                     required_fields = td.input_schema.get("required", []) if td else []
 
-                    # Simple schema-based validation
                     missing = [r for r in required_fields if r not in args]
                     if missing:
                         error_text = (
@@ -161,7 +161,7 @@ class AgenticOrchestrator:
                         self.tool_logs.append(
                             ToolLogEntry(
                                 step=step,
-                                tool_name=tool_name or "UNKNOWN",
+                                tool_name=tool_name,
                                 server_name=server_name,
                                 arguments=args,
                                 success=False,
@@ -175,15 +175,47 @@ class AgenticOrchestrator:
                                 "tool_call_id": tool_call_id,
                                 "name": tool_name,
                                 "content": (
-                                    f"The call to tool '{tool_name}' is missing required "
-                                    f"params {missing}. Please fix the arguments or pick "
-                                    "a different tool."
+                                    error_text
+                                    + ". Adjust your call or choose another tool."
                                 ),
                             }
                         )
                         continue
 
-                    # Call MCP tool
+                    # Rate limiting
+                    count = self.tool_call_counts.get(tool_name or "UNKNOWN", 0)
+                    if count >= self.max_calls_per_tool:
+                        error_text = (
+                            f"Rate limit reached for tool '{tool_name}' "
+                            f"({self.max_calls_per_tool}/run)."
+                        )
+                        self.tool_logs.append(
+                            ToolLogEntry(
+                                step=step,
+                                tool_name=tool_name,
+                                server_name=server_name,
+                                arguments=args,
+                                success=False,
+                                result_preview="",
+                                error=error_text,
+                            )
+                        )
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call_id,
+                                "name": tool_name,
+                                "content": (
+                                    error_text
+                                    + " Please switch to another tool or strategy."
+                                ),
+                            }
+                        )
+                        continue
+
+                    self.tool_call_counts[tool_name] = count + 1
+
+                    # Execute tool
                     try:
                         result_str = await mcp_client.call_tool(tool_name, args)
                         preview = result_str[:800]
@@ -191,7 +223,7 @@ class AgenticOrchestrator:
                         self.tool_logs.append(
                             ToolLogEntry(
                                 step=step,
-                                tool_name=tool_name or "UNKNOWN",
+                                tool_name=tool_name,
                                 server_name=server_name,
                                 arguments=args,
                                 success=True,
@@ -199,7 +231,6 @@ class AgenticOrchestrator:
                             )
                         )
 
-                        # Feed result back as tool message
                         messages.append(
                             {
                                 "role": "tool",
@@ -209,18 +240,19 @@ class AgenticOrchestrator:
                             }
                         )
 
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         tb = traceback.format_exc(limit=3)
                         error_text = (
-                            f"Tool '{tool_name}' (server='{server_name}') failed.\n"
+                            f"Tool '{tool_name}' failed.\n"
+                            f"Server: {server_name}\n"
                             f"Arguments: {args}\n"
                             f"Error: {e}\n"
-                            f"Traceback (truncated):\n{tb}"
+                            f"Traceback:\n{tb}"
                         )
                         self.tool_logs.append(
                             ToolLogEntry(
                                 step=step,
-                                tool_name=tool_name or "UNKNOWN",
+                                tool_name=tool_name,
                                 server_name=server_name,
                                 arguments=args,
                                 success=False,
@@ -228,26 +260,23 @@ class AgenticOrchestrator:
                                 error=error_text,
                             )
                         )
-
-                        # Send rich error context back to the LLM to allow re-planning
                         messages.append(
                             {
                                 "role": "tool",
                                 "tool_call_id": tool_call_id,
                                 "name": tool_name,
                                 "content": (
-                                    "The tool call failed. Here is what happened:\n"
+                                    "Tool call failed.\n"
                                     + error_text
-                                    + "\nPlease adapt your strategy. "
-                                      "Do not retry the same call blindly."
+                                    + "\nReplan with a different strategy."
                                 ),
                             }
                         )
 
             if not final_answer:
                 final_answer = (
-                    "I could not fully complete the task within the maximum number of steps. "
-                    "Check the tool logs for partial progress and intermediate results."
+                    "I could not fully complete the task within the allowed steps. "
+                    "Check the tool logs for intermediate results."
                 )
 
             return OrchestratorResult(

@@ -43,7 +43,12 @@ server = Server("local_insights")
     )
 )
 async def clean_text_tool(text: str, lowercase: bool = False) -> str:
-    """Basic text preprocessing: strip HTML, collapse whitespace, normalize encoding."""
+    """
+    Basic text preprocessing: strip HTML, collapse whitespace, normalize encoding.
+    Limitations:
+    - purely heuristic and deterministic
+    - does not handle complex markup (e.g. nested tags) perfectly
+    """
     logger.info("clean_text called (lowercase=%s)", lowercase)
 
     if not isinstance(text, str):
@@ -70,7 +75,9 @@ async def clean_text_tool(text: str, lowercase: bool = False) -> str:
         description=(
             "Generate structured insights from a cleaned text. "
             "Returns JSON with key_points, risks, and recommended_steps. "
-            "Deterministic, no LLM inside this tool."
+            "Deterministic, no LLM inside this tool.\n"
+            "Limitations: relies on simple keyword detection and sentence length; "
+            "does not understand deep semantics."
         ),
         inputSchema={
             "type": "object",
@@ -88,6 +95,10 @@ async def generate_insights(text: str) -> str:
     """
     Extract simple structured 'insights' heuristically.
     This tool is deterministic and safe: it never calls an LLM by itself.
+
+    Limitations:
+    - Uses keyword-based heuristics to detect 'risks'
+    - Sentences are split with a simple regex, which may be imperfect
     """
     logger.info("generate_insights called")
 
