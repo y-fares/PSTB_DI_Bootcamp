@@ -1,0 +1,11 @@
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day3/DailyChallenge/app.py
+suggestions for improvement:
+- No specific feedback.
+Correctness: 100%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day3/DailyChallenge/requirements.txt
+suggestions for improvement:
+- The provided 'code' is just a list of Python packages. It doesn't implement any part of the agentic RAG application described in the chapter. The instructions require building a Streamlit app (`app.py`) and an agentic RAG pipeline in a notebook (`agentic_rag.ipynb`). This submission doesn't do either.
+- The listed packages are necessary but not sufficient to fulfill the requirements. The code should implement the agent, retriever, and Streamlit interface.
+Correctness: 0.0%
+-----
