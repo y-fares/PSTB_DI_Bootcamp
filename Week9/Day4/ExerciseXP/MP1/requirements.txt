@@ -1,0 +1,4 @@
+mcp[cli]
+openai>=1.40.0
+python-dotenv
+streamlit

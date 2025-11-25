@@ -1,76 +1,81 @@
 # app.py
-# ### Streamlit UI for the agentic MCP application
+# ### Streamlit UI for the MCP agentic application
 
 from __future__ import annotations
 
-import asyncio
-from typing import List
+import streamlit as st
 
-import streamlit as st  # pip install streamlit
-
-from orchestrator import AgenticOrchestrator, OrchestratorResult
 from config import load_llm_config
+from orchestrator import run_agent_sync
 
 
-# ### Synchronous wrapper for the async orchestrator
-def run_agent_sync(user_goal: str) -> OrchestratorResult:
-    orchestrator = AgenticOrchestrator()
-    return asyncio.run(orchestrator.run(user_goal))
-
-
-# ### Streamlit layout
 def main() -> None:
-    st.set_page_config(page_title="MCP Agentic App", layout="wide")
+    # Simple init flag to éviter les bugs de session_state
+    if "init" not in st.session_state:
+        st.session_state["init"] = True
 
-    llm_cfg = load_llm_config()
+    st.set_page_config(page_title="MCP Agentic App", layout="wide")
 
     st.title("🔧 MCP Agentic Application")
 
-    st.markdown(
-        f"""
-        ### Configuration
-        - **LLM backend:** `{llm_cfg.backend}`
-        - **Model:** `{llm_cfg.model}`
-        """
-    )
+    # Petit indicateur pour être sûr que l'app se charge
+    st.markdown("✅ **App loaded.** If you see this, Streamlit is running correctly.")
+
+    # Affichage de la config LLM
+    try:
+        llm_cfg = load_llm_config()
+        st.markdown(
+            f"""
+            ### Configuration
+            - **LLM backend:** `{llm_cfg.backend}`
+            - **Model:** `{llm_cfg.model}`
+            """
+        )
+    except Exception as e:  # si la config LLM foire, on le voit dans l'UI
+        st.error("Error while loading LLM configuration.")
+        st.exception(e)
+        return
 
     st.markdown("### User goal")
     user_goal = st.text_area(
         "Describe what you want the agent to do:",
         height=150,
-        placeholder="Example: Analyse this GitHub repo, open existing issues and propose a refactoring plan...",
+        placeholder="Example: Search the web for recent news on MCP and summarize key trends...",
     )
 
     if st.button("Run agent", type="primary"):
-
         if not user_goal.strip():
             st.error("Please provide a non-empty goal.")
         else:
             with st.spinner("Running agent with MCP tools..."):
-                result = run_agent_sync(user_goal)
+                try:
+                    result = run_agent_sync(user_goal)
+                except Exception as e:
+                    st.error("Agent crashed while running.")
+                    st.exception(e)
+                    return
 
             st.subheader("✅ Final answer")
             st.write(result.final_answer)
 
             st.subheader("🔍 Tool calls log")
-            for log in result.tool_logs:
-                with st.expander(
-                    f"Step {log.step} – {log.tool_name} "
-                    f"({'OK' if log.success else 'ERROR'})"
-                ):
-                    st.markdown(f"**Server:** `{log.server_name}`")
-                    st.markdown("**Arguments:**")
-                    st.json(log.arguments)
-                    st.markdown("**Result preview:**")
-                    st.text(log.result_preview)
-                    if log.error:
-                        st.markdown("**Error:**")
-                        st.code(log.error)
+            if not result.tool_logs:
+                st.write("No tool calls were recorded.")
+            else:
+                for log in result.tool_logs:
+                    with st.expander(
+                        f"Step {log.step} – {log.tool_name} "
+                        f"({'OK' if log.success else 'ERROR'})"
+                    ):
+                        st.markdown(f"**Server:** `{log.server_name}`")
+                        st.markdown("**Arguments:**")
+                        st.json(log.arguments)
+                        st.markdown("**Result preview:**")
+                        st.text(log.result_preview)
+                        if log.error:
+                            st.markdown("**Error:**")
+                            st.code(log.error)
 
-            st.subheader("🧠 Raw messages trace (for debugging)")
-            with st.expander("Show messages"):
-                st.json(result.messages_trace)
 
-
-if __name__ == "__main__":
-    main()
+# Avec Streamlit, on appelle main() directement (le script est exécuté comme __main__)
+main()

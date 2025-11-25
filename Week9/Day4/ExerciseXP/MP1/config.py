@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict, Optional
+from dotenv import load_dotenv
 
+# Load .env file at import time
+load_dotenv()
 
 # ### LLM configuration dataclass
 @dataclass
@@ -23,7 +26,7 @@ class MCPServerConfig:
     name: str             # logical name, used for namespacing tools
     command: str          # e.g. "npx" or "python"
     args: List[str]       # command arguments for the server
-    env: dict | None = None
+    env: Optional[Dict[str, str]] = None
 
 
 # ### Load LLM configuration from environment variables
@@ -43,12 +46,10 @@ def load_llm_config() -> LLMConfig:
         )
 
     if backend == "ollama":
-        # Ollama OpenAI-compatible endpoint
         return LLMConfig(
             backend="ollama",
             model=os.getenv("LLM_MODEL", "llama3.1"),
             base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
-            # Ollama ignores the key but OpenAI client requires one
             api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
         )
 
@@ -56,31 +57,9 @@ def load_llm_config() -> LLMConfig:
 
 
 # ### Load MCP servers configuration from env
-# You **must** adapt these to match the actual community servers you choose.
 def load_mcp_server_configs() -> List[MCPServerConfig]:
-    """
-    Minimal example:
-    - MCP_GITHUB_ARGS="--stdio @modelcontextprotocol/server-github"
-    - MCP_FILES_ARGS="--stdio @modelcontextprotocol/server-filesystem /tmp"
-
-    Adjust commands/args according to each server README.
-    """
-
     servers: List[MCPServerConfig] = []
 
-    # #### Example third-party server 1 (e.g. GitHub MCP server)
-    github_args = os.getenv("MCP_GITHUB_ARGS")
-    if github_args:
-        servers.append(
-            MCPServerConfig(
-                name="github",
-                command=os.getenv("MCP_GITHUB_CMD", "npx"),
-                args=github_args.split(),
-                env=None,
-            )
-        )
-
-    # #### Example third-party server 2 (e.g. filesystem / CSV / notes)
     files_args = os.getenv("MCP_FILES_ARGS")
     if files_args:
         servers.append(
@@ -88,26 +67,33 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
                 name="files",
                 command=os.getenv("MCP_FILES_CMD", "npx"),
                 args=files_args.split(),
-                env=None,
             )
         )
 
-    # #### Your own MCP server (custom tools)
+    web_args = os.getenv("MCP_WEB_ARGS")
+    if web_args:
+        servers.append(
+            MCPServerConfig(
+                name="web",
+                command=os.getenv("MCP_WEB_CMD", "npx"),
+                args=web_args.split(),
+            )
+        )
+
     local_args = os.getenv("MCP_LOCAL_ARGS")
     if local_args:
         servers.append(
             MCPServerConfig(
-                name="local_insights",
+                name="local",
                 command=os.getenv("MCP_LOCAL_CMD", "python"),
                 args=local_args.split(),
-                env=None,
             )
         )
 
-    if not servers:
+    if len(servers) < 2:
         raise RuntimeError(
-            "No MCP servers configured. "
-            "Set at least MCP_GITHUB_ARGS and MCP_FILES_ARGS (and optionally MCP_LOCAL_ARGS)."
+            "You must configure at least 2 MCP servers via env vars "
+            "(e.g. MCP_FILES_ARGS and MCP_WEB_ARGS)."
         )
 
     return servers

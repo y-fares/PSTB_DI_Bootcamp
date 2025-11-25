@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-import asyncio
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
-from mcp import ClientSession, StdioServerParameters, types  # pip install mcp
+from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 
 from config import MCPServerConfig, load_mcp_server_configs
@@ -40,20 +39,19 @@ class MCPMultiClient:
 
     async def __aenter__(self) -> "MCPMultiClient":
         self._exit_stack = AsyncExitStack()
-        # Connect to each MCP server
         for cfg in self.server_configs:
             server_params = StdioServerParameters(
                 command=cfg.command,
                 args=cfg.args,
                 env=cfg.env,
             )
-            read, write = await self._exit_stack.enter_async_context(
+            read_stream, write_stream = await self._exit_stack.enter_async_context(
                 stdio_client(server_params)
             )
-            session = ClientSession(read, write)
+            session = ClientSession(read_stream, write_stream)
             await session.initialize()
             self.sessions[cfg.name] = session
-        # Load tools metadata
+
         await self._discover_tools()
         return self
 
@@ -63,26 +61,28 @@ class MCPMultiClient:
         self.sessions.clear()
         self.tools.clear()
 
-    # ### Discover tools on all MCP servers and build a registry
     async def _discover_tools(self) -> None:
+        """Discover tools on all MCP servers and build a registry."""
         for server_name, session in self.sessions.items():
-            response: types.ListToolsResult = await session.list_tools()
-            for tool in response.tools:
-                # Namespacing: server.tool so we avoid collisions
+            result: types.ListToolsResult = await session.list_tools()
+            for tool in result.tools:
                 llm_name = f"{server_name}__{tool.name}"
-                input_schema = tool.inputSchema or {"type": "object", "properties": {}}
-
-                descriptor = ToolDescriptor(
+                input_schema = tool.inputSchema or {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                }
+                td = ToolDescriptor(
                     llm_name=llm_name,
                     server_name=server_name,
                     tool_name=tool.name,
                     description=tool.description or "",
                     input_schema=input_schema,
                 )
-                self.tools[llm_name] = descriptor
+                self.tools[llm_name] = td
 
-    # ### Convert MCP tools into OpenAI-style tool specs for the LLM
     def build_llm_tools_spec(self) -> List[Dict[str, Any]]:
+        """Convert MCP tools into OpenAI-style tools for the LLM."""
         tools_for_llm: List[Dict[str, Any]] = []
 
         for td in self.tools.values():
@@ -106,8 +106,8 @@ class MCPMultiClient:
 
         return tools_for_llm
 
-    # ### Call one tool by its LLM-exposed name
-    async def call_tool(self, llm_tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, llm_tool_name: str, arguments: Dict[str, Any]) -> str:
+        """Call one tool by its LLM-exposed name and return text content."""
         td = self.tools.get(llm_tool_name)
         if not td:
             raise ValueError(f"Unknown tool name from LLM: {llm_tool_name}")
@@ -117,14 +117,17 @@ class MCPMultiClient:
             raise RuntimeError(f"No active MCP session for server '{td.server_name}'.")
 
         result = await session.call_tool(td.tool_name, arguments=arguments)
-        # MCP returns a structured result; we mostly care about text content here
-        # but you can adapt according to your tools.
-        parts = []
+
+        # Flatten text content from MCP result
+        parts: List[str] = []
         for item in result.content:
-            # types.TextContent etc.
+            # TextContent case
             if hasattr(item, "text"):
                 parts.append(item.text)
             elif isinstance(item, dict) and "text" in item:
-                parts.append(item["text"])
-        return "\n".join(parts) if parts else str(result)
+                parts.append(str(item["text"]))
+            else:
+                # fallback
+                parts.append(str(item))
 
+        return "\n".join(parts)
