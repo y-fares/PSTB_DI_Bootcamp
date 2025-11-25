@@ -1,0 +1,42 @@
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/app.py
+suggestions for improvement:
+- The code provides a Streamlit UI for an agentic MCP application, but it doesn't fulfill the core requirements of the mini-project, which are: creating a custom MCP server with custom tools, combining it with external MCP servers, and using an LLM for planning and robustness.
+- The provided code focuses on the UI aspect and lacks the crucial components of a custom MCP server and the orchestration logic using both custom and external servers. Therefore, the entire architecture required to meet the problem requirements is not covered by this code.
+Correctness: 0%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/config.py
+suggestions for improvement:
+- The code provides a configuration system for LLM backends and MCP servers, which is a good starting point. However, it doesn't actually implement the core requirement of creating a custom MCP server with at least one non-trivial tool. It only sets up the configuration for such a server.
+- The code loads configurations from environment variables, which is a good practice. However, the example configurations provided are placeholders and need to be replaced with actual values for the external servers.
+- Consider adding validation to the loaded configurations to ensure they are valid before using them. This can help prevent errors later on.
+Correctness: 50%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/llm_client.py
+suggestions for improvement:
+- This code only addresses the 'Runtime options' requirement partially. It lacks the MCP server with custom tools, composition with external servers from Part 1, and the agentic client that discovers and uses tools.
+- Consider adding error handling and logging for better robustness and debugging.
+- While the code uses `openai` library, the prompt focuses on GroqCloud or Ollama. Ensure complete support for these platforms as specified in the requirements.
+Correctness: 0%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/mcp_multi_client.py
+suggestions for improvement:
+- This code implements an MCP multi-client to connect to multiple MCP servers. However, the core requirement of the assignment is to create **your own** MCP server with custom tools. This code does not fulfill that requirement.
+- The code focuses on client-side functionality (connecting to and using existing servers) but completely misses the server-side aspect of creating and exposing custom tools.
+- The code uses configurations from `config.py`, which should be where the custom server and tools are defined. Since the prompt asks for custom tools, it is expected that the config file will contain some implementation of that, which it does not. The usage of `load_mcp_server_configs` is not relevant because the configurations should come from a custom server.
+Correctness: 0%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/my_mcp_server.py
+suggestions for improvement:
+- Consider adding input validation to the `generate_insights` tool to ensure the input text is not empty.
+- While the `generate_insights` tool provides structured output, consider making its functionality more sophisticated, possibly by using a simple NLP library for tasks like named entity recognition to extract more nuanced insights. The prompt specified that this tool should be non-trivial.
+- For production use, implement proper logging and error handling within both tools to enhance debugging and monitoring capabilities.
+Correctness: 100%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day4/ExerciseXP/Mini_Project_2/orchestrator.py
+suggestions for improvement:
+- The code provides a good foundation for an agentic orchestrator, but it's missing the key requirement of the assignment: implementing a **custom MCP server** with at least one or two custom tools. The code focuses on the orchestration logic and interaction with external MCP servers, but it doesn't include any code for creating and hosting your own server with custom tools.
+- The code uses exception handling, but the error messages could include more context. For instance, including the specific tool name and arguments that caused the error would make debugging easier.
+- The code uses broad exception handling (except Exception as e), which can mask underlying issues. Consider using more specific exception types.
+- The code logs 'result_preview' but truncates it to 500 characters. Consider making this truncation configurable or providing an option to view the full result in the UI.  Also, consider what type of information should be considered sensitive and logged. The final solution is sending all LLM messages. Be careful about the contents of those messages.
+Correctness: 30%
+-----
