@@ -1,5 +1,13 @@
-# app.py
-# ### Streamlit UI for the MCP + custom server agentic application
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This file implements ONLY the Streamlit UI.
+# The core logic (MCP servers, custom tools, LLM planning, orchestration) is
+# implemented in:
+# - my_mcp_server.py        → custom MCP server and tools (Part 2)
+# - mcp_multi_client.py     → multi-server MCP client (external + custom)
+# - llm_client.py           → LLM planning (Groq/Ollama)
+# - orchestrator.py         → agentic orchestration using all tools.
+# This UI calls run_agent_sync(...) from orchestrator.py.
+
 
 from __future__ import annotations
 

@@ -1,5 +1,13 @@
-# orchestrator.py
-# ### Agentic orchestrator: LLM plans, MCP executes, multi-server composition
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This module implements the agentic orchestrator:
+# - Uses llm_client.py (Groq/Ollama) for planning and tool selection
+# - Uses mcp_multi_client.py to call tools from:
+#   * external MCP servers (Part 1): "files", "web"
+#   * custom MCP server (Part 2): "local_insights" from my_mcp_server.py
+# - Lets the LLM decide the order of multi-step tool calls based on intermediate results
+# - Implements error handling, basic rate limiting, and detailed tool logs.
+# app.py calls run_agent_sync(...) to run the full end-to-end agent.
+
 
 from __future__ import annotations
 

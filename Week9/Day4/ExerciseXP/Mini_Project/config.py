@@ -1,5 +1,11 @@
-# config.py
-# ### Central configuration for LLM backend and MCP servers
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This module centralizes configuration:
+# - LLM backend selection (GroqCloud or Ollama) for llm_client.py
+# - MCP servers configuration for:
+#   * external servers from Part 1 (e.g. "files", "web")
+#   * custom server from Part 2 ("local_insights" implemented in my_mcp_server.py)
+# load_mcp_server_configs() is used by mcp_multi_client.py and orchestrator.py.
+
 
 from __future__ import annotations
 

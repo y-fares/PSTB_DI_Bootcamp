@@ -1,5 +1,14 @@
-# test_mcp.py
-# ### Test MCP servers: discovery + multi-server composition (NO LLM)
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This script is a manual test of MCP integration:
+# - Loads MCP servers from config.py (external + custom)
+# - Uses MCPMultiClient to:
+#   * list a directory with the external "files" server
+#   * read a file with the external "files" server
+#   * clean the text with the custom "local_insights" server (my_mcp_server.py)
+#   * generate JSON insights with the custom tool
+# This demonstrates composition of ≥ 2 external servers + the custom server
+# WITHOUT using the LLM (pure integration test).
+
 
 from __future__ import annotations
 

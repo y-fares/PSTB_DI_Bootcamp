@@ -1,5 +1,12 @@
-# my_mcp_server.py
-# ### Your personal MCP server with 2 non-trivial tools
+# Mini Project – MCP Agentic Application (Part 2)
+# This file defines the student's OWN MCP server required by Part 2:
+# - Server name: "local_insights"
+# - Custom tools:
+#   * clean_text(text, lowercase)          → text normalization / cleaning
+#   * generate_insights(text)              → deterministic JSON insights extractor
+# These tools are discovered and called via mcp_multi_client.py and orchestrator.py
+# together with external servers from Part 1 (filesystem + web).
+
 
 from __future__ import annotations
 

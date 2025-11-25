@@ -1,4 +1,13 @@
-# mcp_multi_client.py
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This module implements a unified MCP multi-server client:
+# - Connects to external MCP servers from Part 1 (e.g. "files", "web")
+# - Connects to the student's OWN MCP server from Part 2 ("local_insights")
+#   which is implemented in my_mcp_server.py
+# - Discovers all tools and exposes them to the LLM under names like:
+#   "files__listDirectory", "web__search", "local_insights__clean_text", etc.
+# It is used by orchestrator.py to actually execute tool calls chosen by the LLM.
+
+
 # ### Async MCP multi-server client utilisant le me MCP officiel de Python SDK
 #
 # Ce client se connecte à :

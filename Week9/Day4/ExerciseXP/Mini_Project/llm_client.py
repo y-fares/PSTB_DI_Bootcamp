@@ -1,5 +1,10 @@
-# llm_client.py
-# ### LLM wrapper using OpenAI-compatible API (Groq or Ollama)
+# Mini Project – MCP Agentic Application (Part 1 + Part 2)
+# This module implements the LLM client:
+# - Uses OpenAI-compatible API (GroqCloud or Ollama) with config from config.py
+# - Provides planning for the agent (tool selection via function calling)
+# - Is used directly by orchestrator.py to decide which MCP tools to call.
+# The MCP server with custom tools is defined separately in my_mcp_server.py.
+
 
 from __future__ import annotations
 
