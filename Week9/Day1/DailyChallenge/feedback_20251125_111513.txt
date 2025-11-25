@@ -1,0 +1,13 @@
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day1/DailyChallenge/brief.py
+suggestions for improvement:
+- Consider adding more comprehensive error handling, such as try-except blocks for network requests.
+- Add logging for debugging purposes.
+Correctness: 100%
+-----
+URL: URL: https://github.com/y-fares/PSTB_DI_Bootcamp/blob/main/Week9/Day1/DailyChallenge/server.py
+suggestions for improvement:
+- Consider implementing the CLI client as described in deliverable #2.
+- Implement input validation and sanitization for the save_markdown endpoint filename to prevent path traversal vulnerabilities.
+- Add logging for debugging and monitoring purposes.
+Correctness: 95%
+-----
