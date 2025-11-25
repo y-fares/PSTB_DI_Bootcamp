@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Load .env file at import time
 load_dotenv()
 
+
 # ### LLM configuration dataclass
 @dataclass
 class LLMConfig:
@@ -50,16 +51,25 @@ def load_llm_config() -> LLMConfig:
             backend="ollama",
             model=os.getenv("LLM_MODEL", "llama3.1"),
             base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+            # Ollama does not really use the key, but the client requires one
             api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
         )
 
     raise ValueError(f"Unsupported LLM_BACKEND: {backend}")
 
 
-# ### Load MCP servers configuration from env
+# ### Load MCP servers configuration from env (Part 2)
 def load_mcp_server_configs() -> List[MCPServerConfig]:
-    servers: List[MCPServerConfig] = []
+    """
+    For Part 2:
+    - REQUIRE at least 2 external MCP servers (e.g. files + web)
+    - REQUIRE your own local MCP server (my_mcp_server.py), exposed as 'local_insights'
+    """
 
+    servers: List[MCPServerConfig] = []
+    external_count = 0
+
+    # External server 1: filesystem
     files_args = os.getenv("MCP_FILES_ARGS")
     if files_args:
         servers.append(
@@ -69,7 +79,9 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
                 args=files_args.split(),
             )
         )
+        external_count += 1
 
+    # External server 2: web/search
     web_args = os.getenv("MCP_WEB_ARGS")
     if web_args:
         servers.append(
@@ -81,26 +93,12 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
         )
         external_count += 1
 
+    # Your own MCP server (MANDATORY for Part 2)
     local_args = os.getenv("MCP_LOCAL_ARGS")
-    if local_args:
-        servers.append(
-            MCPServerConfig(
-                name="local",
-                command=os.getenv("MCP_LOCAL_CMD", "python"),
-                args=local_args.split(),
-            )
-        )
-
     if not local_args:
         raise RuntimeError(
             "MCP_LOCAL_ARGS must be set for Part 2 and must point to your my_mcp_server.py.\n"
             "Example: MCP_LOCAL_CMD=python, MCP_LOCAL_ARGS=my_mcp_server.py"
-        )
-
-    if len(servers) < 2:
-        raise RuntimeError(
-            "You must configure at least 2 MCP servers via env vars "
-            "(e.g. MCP_FILES_ARGS and MCP_WEB_ARGS)."
         )
 
     servers.append(
@@ -111,6 +109,7 @@ def load_mcp_server_configs() -> List[MCPServerConfig]:
         )
     )
 
+    # Enforce the '≥ 2 external + 1 local' rule
     if external_count < 2:
         raise RuntimeError(
             "You must configure at least 2 external MCP servers (e.g. files + web) "

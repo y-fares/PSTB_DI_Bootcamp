@@ -55,16 +55,24 @@ class AgenticOrchestrator:
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI agent that must use tools via MCP.\n"
-                        "You have three types of servers available:\n"
-                        "- 'files': to read and list files in /home/yacine/mcp_root.\n"
-                        "- 'web': to search and fetch web pages.\n"
-                        "- 'local_insights': to clean text and generate structured insights.\n"
-                        "Typical flow: use 'web' or 'files' to collect raw text/data, then\n"
-                        "use 'local_insights__clean_text' and 'local_insights__generate_insights'\n"
-                        "to transform and summarize it.\n"
-                        "Always include required arguments (e.g. path for filesystem tools).\n"
-                        "Work step by step. Stop when you can provide a clear final answer."
+                        "You must use three MCP servers in this task:\n"
+                        "- 'files' server (filesystem tools)\n"
+                        "- 'web' server (search/fetch tools)\n"
+                        "- 'local_insights' server (YOUR CUSTOM TOOLS)\n\n"
+
+                        "Your custom tools include:\n"
+                        "• local_insights__clean_text(text, lowercase)\n"
+                        "• local_insights__generate_insights(text)\n\n"
+
+                        "Workflow example you MUST follow when relevant:\n"
+                        "1. Use 'web__search' to retrieve text\n"
+                        "2. Use 'web__fetch' to get full content\n"
+                        "3. Use 'local_insights__clean_text' to clean raw text\n"
+                        "4. Use 'local_insights__generate_insights' to analyze the cleaned text\n\n"
+
+                        "Always plan multi-step tasks.\n"
+                        "Do not answer directly if a tool can help.\n"
+                        "Stop only when you have enough processed insights."
                     ),
                 },
                 {
